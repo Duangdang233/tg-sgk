@@ -1,0 +1,42 @@
+{
+  "id": "tg-sgk",
+  "name": "TG SGK",
+  "description": "Operate allowlisted Telegram bot conversations through the tg-sgk service.",
+  "contracts": {
+    "tools": [
+      "tg_bot_inspect",
+      "tg_send_message",
+      "tg_get_recent_messages",
+      "tg_wait_update",
+      "tg_click_button",
+      "tg_save_flow",
+      "tg_list_flows",
+      "tg_run_flow",
+      "tg_get_history"
+    ]
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["baseUrl", "apiKey"],
+    "properties": {
+      "baseUrl": {
+        "type": "string",
+        "description": "HTTPS base URL of the tg-sgk service."
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "Bearer API key configured on the tg-sgk service."
+      },
+      "timeoutMs": {
+        "type": "number",
+        "minimum": 1000,
+        "maximum": 180000,
+        "default": 45000
+      }
+    }
+  }
+}

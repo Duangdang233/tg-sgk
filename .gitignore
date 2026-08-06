@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+*.egg-info/
+/dist/
+build/
+data/*
+!data/.gitkeep
+*.session
+*.session-journal
+*.sqlite3
+*.db
+openclaw-plugin/node_modules/
