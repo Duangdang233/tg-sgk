@@ -1,6 +1,7 @@
 {
   "id": "tg-sgk",
   "name": "TG SGK",
+  "version": "0.1.1",
   "description": "Operate verified Telegram bot conversations through the tg-sgk service.",
   "contracts": {
     "tools": [
