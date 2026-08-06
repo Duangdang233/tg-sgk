@@ -1,21 +1,37 @@
 services:
   api:
     build: .
+    container_name: tg-sgk-api
     restart: unless-stopped
     env_file: .env
     volumes:
       - tg_data:/data
     expose:
       - "8000"
+    networks:
+      - tg_sgk
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 6
       start_period: 10s
+
+  login:
+    build: .
+    profiles: ["tools"]
+    env_file: .env
+    volumes:
+      - tg_data:/data
+    networks:
+      - tg_sgk
+    stdin_open: true
+    tty: true
+    command: ["python", "-m", "app.login"]
 
   caddy:
     image: caddy:2-alpine
+    profiles: ["https"]
     restart: unless-stopped
     depends_on:
       api:
@@ -25,20 +41,16 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - tg_sgk
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
 
-  login:
-    build: .
-    profiles: ["tools"]
-    env_file: .env
-    volumes:
-      - tg_data:/data
-    stdin_open: true
-    tty: true
-    command: ["python", "-m", "app.login"]
+networks:
+  tg_sgk:
+    name: tg-sgk-net
 
 volumes:
   tg_data:
