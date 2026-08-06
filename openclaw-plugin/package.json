@@ -1,41 +1,33 @@
 {
   "name": "@duangdang233/openclaw-tg-sgk",
-  "version": "0.1.1",
-  "description": "OpenClaw tools for the tg-sgk Telegram bot-only automation service",
+  "version": "0.2.0",
+  "description": "Direct Telegram user-account tools for OpenClaw, restricted to bot chats",
   "type": "module",
   "main": "./index.js",
-  "files": [
-    "index.js",
-    "openclaw.plugin.json",
-    "README.md"
-  ],
+  "files": ["index.js", "openclaw.plugin.json", "README.md"],
   "scripts": {
     "build": "node --check index.js",
-    "plugin:build": "node --check index.js",
-    "plugin:validate": "node --check index.js && npm pack --dry-run",
     "check": "node --check index.js",
-    "test": "npm run check"
+    "test": "node --check index.js"
+  },
+  "dependencies": {
+    "teleproto": "1.228.4",
+    "typebox": "1.1.39"
   },
   "peerDependencies": {
     "openclaw": ">=2026.5.17"
   },
   "peerDependenciesMeta": {
-    "openclaw": {
-      "optional": true
-    }
+    "openclaw": { "optional": true }
   },
   "openclaw": {
-    "extensions": [
-      "./index.js"
-    ],
+    "extensions": ["./index.js"],
+    "runtimeExtensions": ["./index.js"],
     "compat": {
       "pluginApi": ">=2026.5.17",
       "minGatewayVersion": "2026.5.17"
-    },
-    "build": {
-      "openclawVersion": "2026.5.17",
-      "pluginSdkVersion": "2026.5.17"
     }
   },
+  "engines": { "node": ">=22" },
   "license": "MIT"
 }
