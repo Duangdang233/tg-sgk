@@ -13,10 +13,12 @@
 ### 一条命令安装
 
 ```bash
-git clone git@github.com:Duangdang233/tg-sgk.git
+git clone https://github.com/Duangdang233/tg-sgk.git
 cd tg-sgk
 bash quickstart.sh
 ```
+
+仓库是私有仓库时，GitHub 会要求使用已登录的凭据或 Personal Access Token。不要使用 `git@github.com:...`，除非当前机器已经配置 SSH 客户端和私钥。
 
 脚本只会要求你输入：
 
@@ -31,9 +33,11 @@ bash quickstart.sh
 - 创建 Telegram 登录 Session
 - 启动 `tg-sgk-api`
 - 把它与 OpenClaw 接入同一个私有 Docker 网络
-- 将预编译插件打包并安装到 OpenClaw
+- 打包并安装零编译 JavaScript 插件
 - 写入插件配置并重启 OpenClaw
 - 用 `@BotFather` 验证 Telegram 登录、网络和插件注册
+
+插件不需要执行 `npm install`、`npm run build` 或 TypeScript 编译。
 
 完成后，在你平常使用的 OpenClaw 对话里发送：
 
@@ -87,62 +91,3 @@ Telegram 第三方机器人
 ```
 
 测试模式不需要域名、HTTPS、Caddy，也不需要修改 OpenClaw 的 `docker-compose.yml`。
-
-## 更新
-
-```bash
-cd tg-sgk
-git pull
-bash quickstart.sh
-```
-
-脚本可重复执行，会复用 Telegram Session 和现有配置。
-
-## 常用排错
-
-```bash
-# tg-sgk 状态
-docker ps --filter name=tg-sgk-api
-docker logs --tail=100 tg-sgk-api
-
-# 查看 OpenClaw 容器
-docker ps --format '{{.Names}} {{.Image}}' | grep -i openclaw
-
-# 检查插件
-OPENCLAW_CONTAINER=<你的容器名>
-docker exec "$OPENCLAW_CONTAINER" openclaw plugins inspect tg-sgk --runtime --json
-
-# 验证 API 网络
-docker exec "$OPENCLAW_CONTAINER" node -e \
-  "fetch('http://tg-sgk-api:8000/health').then(r=>r.text()).then(console.log)"
-```
-
-OpenClaw 容器被重新创建后，重新执行一次 `bash quickstart.sh`，脚本会重新连接私有网络并恢复插件配置。
-
-## 安全边界
-
-- 所有 API 操作都会验证 `entity.bot == true`。
-- 不允许向真人、群组和频道发送消息。
-- 不支持 Mini App、网页、支付、钱包和验证码绕过。
-- Telegram Session 只保存在 Docker 卷 `tg_data` 中，不进入 OpenClaw，也不会上传 GitHub。
-- `.env`、Session、数据库、验证码和两步验证密码禁止提交。
-
-## 开发测试
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e '.[dev]'
-pytest -q
-ruff check app tests
-```
-
-## 可选：以后启用公网 HTTPS
-
-最小流程跑通后，再配置 `TG_SGK_DOMAIN` 并启动：
-
-```bash
-docker compose --profile https up -d caddy
-```
-
-这不是首次测试的必要步骤。
