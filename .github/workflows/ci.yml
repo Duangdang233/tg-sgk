@@ -32,8 +32,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: openclaw-plugin/package-lock.json
       - run: npm install --legacy-peer-deps
       - run: npm run build
       - run: node --check dist/index.js
