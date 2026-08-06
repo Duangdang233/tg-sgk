@@ -32,9 +32,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: npm install --legacy-peer-deps
-      - run: npm run build
-      - run: node --check dist/index.js
+      - run: node --check index.js
+      - run: npm pack --dry-run
 
   docker:
     runs-on: ubuntu-latest
