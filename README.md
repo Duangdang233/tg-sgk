@@ -1,6 +1,19 @@
 # tg-sgk
 
+> Bot-only Telegram user automation service for OpenClaw.
+
 让 OpenClaw 使用你的 Telegram **个人账号**操作第三方机器人。服务端强制校验目标必须是 Bot，拒绝真人、群组和频道。
+
+## 项目简介
+
+- FastAPI 服务，统一暴露 Telegram Bot 自动化 API。
+- 通过 Telethon 复用你的 Telegram 个人账号 Session。
+- 服务端强制限制目标必须是 Bot，不允许真人、群组和频道。
+- 自带 OpenClaw 插件，可直接在 OpenClaw 中调用。
+
+## Open source status
+
+This repository is published under the MIT License. Before running it in production, read the security boundary below and keep your Telegram credentials, session files, `.env`, and local database private.
 
 ## 最小化跑通
 
@@ -127,6 +140,12 @@ OpenClaw 容器被重新创建后，重新执行一次 `bash quickstart.sh`，�
 - Telegram Session 只保存在 Docker 卷 `tg_data` 中，不进入 OpenClaw，也不会上传 GitHub。
 - `.env`、Session、数据库、验证码和两步验证密码禁止提交。
 
+## 开源协作
+
+- 贡献说明：见 `/home/runner/work/tg-sgk/tg-sgk/CONTRIBUTING.md`
+- 安全披露：见 `/home/runner/work/tg-sgk/tg-sgk/SECURITY.md`
+- 社区行为准则：见 `/home/runner/work/tg-sgk/tg-sgk/CODE_OF_CONDUCT.md`
+
 ## 开发测试
 
 ```bash
@@ -146,3 +165,7 @@ docker compose --profile https up -d caddy
 ```
 
 这不是首次测试的必要步骤。
+
+## License
+
+MIT. See `/home/runner/work/tg-sgk/tg-sgk/LICENSE`.
