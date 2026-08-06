@@ -1,302 +1,148 @@
 # tg-sgk
 
-`tg-sgk` is a small, bot-only Telegram user automation service designed for OpenClaw.
+让 OpenClaw 使用你的 Telegram **个人账号**操作第三方机器人。服务端强制校验目标必须是 Bot，拒绝真人、群组和频道。
 
-It logs in with **one Telegram user account** through Telethon, but every API action verifies that the destination entity is a Telegram bot. Human users, groups, and channels are rejected.
+## 最小化跑通
 
-## What the MVP supports
+### 前提
 
-- Inspect and verify a Telegram bot target.
-- Send text or commands to a bot.
-- Read recent bot messages and button layouts.
-- Wait for a new message or an edited message.
-- Click an inline/reply button by exact text or row/column.
-- Save confirmed fixed workflows.
-- Run fixed workflows without model reasoning.
-- Serialize all Telegram work through one priority queue.
-- Give interactive OpenClaw actions priority over queued fixed flows.
-- Store basic execution history in SQLite.
-- Expose an authenticated HTTP API.
-- Serve the API over HTTPS with Caddy.
-- Install a companion OpenClaw tool plugin.
+- `tg-sgk` 与现有 OpenClaw Docker 容器运行在同一台机器。
+- 已安装 Docker 和 Docker Compose v2。
+- 在 `my.telegram.org` 创建应用并取得 `api_id`、`api_hash`。
 
-## Deliberate limits
+### 一条命令安装
 
-The MVP does **not** support:
-
-- Messaging human accounts.
-- Sending to groups or channels.
-- Multiple Telegram accounts.
-- Telegram Mini Apps or external web pages.
-- Payments, wallets, CAPTCHA bypass, invitation farming, or mass messaging.
-- Server-side scheduling. OpenClaw is expected to trigger scheduled flows.
-- Fully autonomous flow repair. OpenClaw can inspect a failed flow and try one operator-approved repair.
-
-## Architecture
-
-```text
-OpenClaw
-   │ HTTPS + Bearer API key
-   ▼
-tg-sgk API
-   │ single priority worker
-   ▼
-Telethon user session
-   │ bot-only entity verification
-   ▼
-Third-party Telegram bots
+```bash
+git clone git@github.com:Duangdang233/tg-sgk.git
+cd tg-sgk
+bash quickstart.sh
 ```
 
-The Telegram `.session` file exists only in the persistent `tg_data` service volume. The OpenClaw plugin never receives it.
+脚本只会要求你输入：
 
-## Quick local smoke test
+1. `TG_API_ID`
+2. `TG_API_HASH`
+3. Telegram 手机号
+4. OpenClaw 容器名（只有无法自动识别时才询问）
 
-The repository includes a deterministic mock Telegram adapter. It exercises the whole API without Telegram credentials.
+随后脚本会自动：
+
+- 生成 API Key 和 `.env`
+- 创建 Telegram 登录 Session
+- 启动 `tg-sgk-api`
+- 把它与 OpenClaw 接入同一个私有 Docker 网络
+- 将预编译插件打包并安装到 OpenClaw
+- 写入插件配置并重启 OpenClaw
+- 用 `@BotFather` 验证 Telegram 登录、网络和插件注册
+
+完成后，在你平常使用的 OpenClaw 对话里发送：
+
+```text
+使用 tg_bot_inspect 检查 @BotFather 是否为机器人，只检查，不要发送消息。
+```
+
+然后测试一个真实机器人：
+
+```text
+向 @your_bot 发送 /start，读取回复和按钮，但先不要点击。
+```
+
+## 日常使用
+
+探索机器人：
+
+```text
+检查 @example_bot，发送 /start，读取最新回复和按钮，不要自动点击。
+```
+
+点击按钮：
+
+```text
+点击 @example_bot 消息 ID 12345 中名为“每日签到”的按钮，然后读取结果。
+```
+
+保存固定流程：
+
+```text
+把刚才的操作保存为流程 example-checkin，以后直接运行，不需要重新分析。
+```
+
+运行固定流程：
+
+```text
+运行 example-checkin。
+```
+
+## quickstart 的部署结构
+
+```text
+OpenClaw 容器
+    │ tg-sgk OpenClaw 插件
+    │ Docker 私有网络 tg-sgk-net
+    ▼
+tg-sgk-api 容器
+    │ Telethon Session
+    ▼
+Telegram 第三方机器人
+```
+
+测试模式不需要域名、HTTPS、Caddy，也不需要修改 OpenClaw 的 `docker-compose.yml`。
+
+## 更新
+
+```bash
+cd tg-sgk
+git pull
+bash quickstart.sh
+```
+
+脚本可重复执行，会复用 Telegram Session 和现有配置。
+
+## 常用排错
+
+```bash
+# tg-sgk 状态
+docker ps --filter name=tg-sgk-api
+docker logs --tail=100 tg-sgk-api
+
+# 查看 OpenClaw 容器
+docker ps --format '{{.Names}} {{.Image}}' | grep -i openclaw
+
+# 检查插件
+OPENCLAW_CONTAINER=<你的容器名>
+docker exec "$OPENCLAW_CONTAINER" openclaw plugins inspect tg-sgk --runtime --json
+
+# 验证 API 网络
+docker exec "$OPENCLAW_CONTAINER" node -e \
+  "fetch('http://tg-sgk-api:8000/health').then(r=>r.text()).then(console.log)"
+```
+
+OpenClaw 容器被重新创建后，重新执行一次 `bash quickstart.sh`，脚本会重新连接私有网络并恢复插件配置。
+
+## 安全边界
+
+- 所有 API 操作都会验证 `entity.bot == true`。
+- 不允许向真人、群组和频道发送消息。
+- 不支持 Mini App、网页、支付、钱包和验证码绕过。
+- Telegram Session 只保存在 Docker 卷 `tg_data` 中，不进入 OpenClaw，也不会上传 GitHub。
+- `.env`、Session、数据库、验证码和两步验证密码禁止提交。
+
+## 开发测试
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
-
-export TG_MOCK=true
-export TG_SGK_API_KEY=dev-secret-key
-export TG_SGK_DATA_DIR="$PWD/data"
-export TG_SGK_DATABASE_PATH="$PWD/data/tg-sgk.sqlite3"
-export TG_SESSION_PATH="$PWD/data/telegram-user"
-
-uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-In another shell:
-
-```bash
-curl http://127.0.0.1:8000/health
-
-curl -sS http://127.0.0.1:8000/v1/messages/send \
-  -H 'Authorization: Bearer dev-secret-key' \
-  -H 'Content-Type: application/json' \
-  -d '{"bot":"@demo_bot","text":"/start"}'
-```
-
-Run checks:
-
-```bash
 pytest -q
 ruff check app tests
 ```
 
-## Real Telegram setup
+## 可选：以后启用公网 HTTPS
 
-### 1. Get Telegram API credentials
-
-Create an application at `my.telegram.org` and obtain:
-
-- `api_id`
-- `api_hash`
-
-Use a dedicated Telegram account for automation when possible.
-
-### 2. Configure the service
+最小流程跑通后，再配置 `TG_SGK_DOMAIN` 并启动：
 
 ```bash
-cp .env.example .env
+docker compose --profile https up -d caddy
 ```
 
-Set at least:
-
-```dotenv
-TG_SGK_API_KEY=<long random value>
-TG_API_ID=<telegram api id>
-TG_API_HASH=<telegram api hash>
-TG_PHONE=<phone with country code>
-TG_SESSION_PATH=/data/telegram-user
-TG_MOCK=false
-TG_SGK_DOMAIN=tg.example.com
-```
-
-Generate an API key:
-
-```bash
-openssl rand -hex 32
-```
-
-### 3. Create the Telegram session
-
-```bash
-docker compose --profile tools run --rm login
-```
-
-Telegram will request the login code and, when enabled, the two-step verification password. The resulting session is stored in the Docker named volume `tg_data` and survives container replacement. It must never be copied into the repository.
-
-### 4. Start the HTTPS service
-
-Point `TG_SGK_DOMAIN` to the server, then run:
-
-```bash
-docker compose up -d api caddy
-```
-
-Caddy obtains and renews the TLS certificate automatically when DNS and ports 80/443 are correctly configured.
-
-Check:
-
-```bash
-curl https://tg.example.com/health
-```
-
-## API
-
-All `/v1/*` routes require either:
-
-```http
-Authorization: Bearer <TG_SGK_API_KEY>
-```
-
-or:
-
-```http
-X-API-Key: <TG_SGK_API_KEY>
-```
-
-### Bot exploration
-
-```text
-POST /v1/bots/inspect
-POST /v1/messages/send
-GET  /v1/messages/recent
-POST /v1/messages/wait
-POST /v1/buttons/click
-```
-
-Every route resolves the target and checks `entity.bot == true` before acting.
-
-### Fixed workflows
-
-```text
-POST   /v1/flows
-GET    /v1/flows
-GET    /v1/flows/{flow_id}
-DELETE /v1/flows/{flow_id}
-POST   /v1/flows/{flow_id}/run
-```
-
-Example:
-
-```json
-{
-  "id": "example-checkin",
-  "name": "Example daily check-in",
-  "bot": "@example_bot",
-  "steps": [
-    { "action": "send_message", "text": "/start" },
-    { "action": "wait_message", "timeout_seconds": 20 },
-    { "action": "click_button", "text": "每日签到" },
-    { "action": "wait_message_or_edit", "timeout_seconds": 20 },
-    {
-      "action": "assert_text",
-      "contains_any": ["签到成功", "今日已签到", "已经签到"]
-    }
-  ]
-}
-```
-
-Supported step actions:
-
-- `send_message`
-- `wait_message`
-- `click_button`
-- `wait_message_or_edit`
-- `sleep`
-- `assert_text`
-
-### History
-
-```text
-GET /v1/history?limit=50&target=@example_bot
-```
-
-The service stores task type, target, priority, status, result or error, and timestamps. It does not store Telegram credentials.
-
-## Priority behavior
-
-The service has one Telegram worker:
-
-- Interactive OpenClaw actions: priority `100`
-- Fixed workflow runs: priority `10`
-
-An interactive task can move ahead of fixed flows that have not started. The service never interrupts an already-running Telegram operation and never performs concurrent actions on the same session.
-
-## OpenClaw plugin
-
-The companion package is in [`openclaw-plugin/`](openclaw-plugin/).
-
-```bash
-cd openclaw-plugin
-npm install
-npm run build
-openclaw plugins install "$PWD"
-```
-
-Example Gateway configuration:
-
-```json5
-{
-  plugins: {
-    entries: {
-      "tg-sgk": {
-        enabled: true,
-        config: {
-          baseUrl: "https://tg.example.com",
-          apiKey: "same-value-as-TG_SGK_API_KEY",
-          timeoutMs: 45000
-        }
-      }
-    }
-  },
-  tools: {
-    allow: ["tg-sgk"]
-  }
-}
-```
-
-Verify after restarting the Gateway:
-
-```bash
-openclaw plugins inspect tg-sgk --runtime --json
-```
-
-The plugin exposes:
-
-- `tg_bot_inspect`
-- `tg_send_message`
-- `tg_get_recent_messages`
-- `tg_wait_update`
-- `tg_click_button`
-- `tg_save_flow`
-- `tg_list_flows`
-- `tg_run_flow`
-- `tg_get_history`
-
-## First real acceptance test
-
-Use one simple Telegram bot whose flow remains inside Telegram chat:
-
-1. Run `tg_bot_inspect`.
-2. Send `/start`.
-3. Read the returned message and button list.
-4. Click one harmless button.
-5. Wait for a reply or edit.
-6. Save the confirmed flow.
-7. Run the saved flow.
-8. Confirm the history contains a successful `run_flow` record.
-
-Do not test first with payments, wallets, CAPTCHA, Mini Apps, or high-value accounts.
-
-## Security notes
-
-- Never commit `.env`, `.session`, SQLite databases, login codes, or two-factor passwords.
-- Keep the repository private while it contains deployment-specific documentation.
-- Use HTTPS for remote OpenClaw calls.
-- Use a long random API key.
-- Respect Telegram `FLOOD_WAIT` responses and each third-party bot's terms.
-- This project intentionally refuses non-bot targets at the service boundary.
+这不是首次测试的必要步骤。
