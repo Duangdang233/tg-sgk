@@ -1,7 +1,7 @@
 {
   "id": "tg-sgk",
   "name": "TG SGK",
-  "description": "Operate allowlisted Telegram bot conversations through the tg-sgk service.",
+  "description": "Operate verified Telegram bot conversations through the tg-sgk service.",
   "contracts": {
     "tools": [
       "tg_bot_inspect",
@@ -25,10 +25,12 @@
     "properties": {
       "baseUrl": {
         "type": "string",
-        "description": "HTTPS base URL of the tg-sgk service."
+        "minLength": 8,
+        "description": "Base URL of the tg-sgk service. HTTP is allowed on the private Docker network."
       },
       "apiKey": {
         "type": "string",
+        "minLength": 8,
         "description": "Bearer API key configured on the tg-sgk service."
       },
       "timeoutMs": {
