@@ -142,9 +142,9 @@ OpenClaw 容器被重新创建后，重新执行一次 `bash quickstart.sh`，�
 
 ## 开源协作
 
-- 贡献说明：见 `/home/runner/work/tg-sgk/tg-sgk/CONTRIBUTING.md`
-- 安全披露：见 `/home/runner/work/tg-sgk/tg-sgk/SECURITY.md`
-- 社区行为准则：见 `/home/runner/work/tg-sgk/tg-sgk/CODE_OF_CONDUCT.md`
+- 贡献说明：见 `CONTRIBUTING.md`
+- 安全披露：见 `SECURITY.md`
+- 社区行为准则：见 `CODE_OF_CONDUCT.md`
 
 ## 开发测试
 
@@ -168,4 +168,4 @@ docker compose --profile https up -d caddy
 
 ## License
 
-MIT. See `/home/runner/work/tg-sgk/tg-sgk/LICENSE`.
+MIT. See `LICENSE`.
