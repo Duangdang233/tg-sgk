@@ -85,8 +85,8 @@ fi
 openclaw plugins enable tg-sgk >/dev/null
 openclaw config validate >/dev/null
 
-say "Verify plugin runtime"
-openclaw plugins inspect tg-sgk --runtime --json >/dev/null
+say "Verify installed plugin"
+openclaw plugins inspect tg-sgk --json >/dev/null
 
 cat <<'DONE'
 
