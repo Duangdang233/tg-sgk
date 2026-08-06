@@ -1,10 +1,11 @@
 {
   "id": "tg-sgk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "name": "TG SGK",
   "description": "Direct Telegram user-account automation restricted to bot chats; no Docker sidecar required.",
   "contracts": {
     "tools": [
+      "tg_setup_credentials",
       "tg_auth_status",
       "tg_auth_send_code",
       "tg_auth_submit_code",
@@ -20,18 +21,44 @@
       "tg_get_history"
     ]
   },
-  "activation": { "onStartup": true },
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["apiId", "apiHash", "phone"],
     "properties": {
-      "apiId": { "type": "integer", "minimum": 1, "description": "Telegram api_id from my.telegram.org" },
-      "apiHash": { "type": "string", "minLength": 8, "description": "Telegram api_hash from my.telegram.org" },
-      "phone": { "type": "string", "minLength": 5, "description": "Telegram phone number with country code" },
-      "stateDir": { "type": "string", "minLength": 1 },
-      "actionIntervalMs": { "type": "integer", "minimum": 0, "maximum": 60000, "default": 1200 },
-      "defaultTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 180000, "default": 30000 }
+      "apiId": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Telegram api_id from my.telegram.org; optional because tg_setup_credentials can store it later"
+      },
+      "apiHash": {
+        "type": "string",
+        "minLength": 8,
+        "description": "Telegram api_hash from my.telegram.org; optional because tg_setup_credentials can store it later"
+      },
+      "phone": {
+        "type": "string",
+        "minLength": 5,
+        "description": "Telegram phone number with country code; optional because tg_setup_credentials can store it later"
+      },
+      "stateDir": {
+        "type": "string",
+        "minLength": 1
+      },
+      "actionIntervalMs": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 60000,
+        "default": 1200
+      },
+      "defaultTimeoutMs": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 180000,
+        "default": 30000
+      }
     }
   }
 }
