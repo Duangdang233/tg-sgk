@@ -1,31 +1,24 @@
 {
   "name": "@duangdang233/openclaw-tg-sgk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OpenClaw tools for the tg-sgk Telegram bot-only automation service",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./index.js",
   "files": [
-    "dist",
+    "index.js",
     "openclaw.plugin.json",
     "README.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit",
+    "check": "node --check index.js",
     "test": "npm run check"
-  },
-  "dependencies": {
-    "typebox": "1.1.39"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.3"
   },
   "peerDependencies": {
     "openclaw": ">=2026.5.17"
   },
   "openclaw": {
     "extensions": [
-      "./dist/index.js"
+      "./index.js"
     ],
     "compat": {
       "pluginApi": ">=2026.5.17",
