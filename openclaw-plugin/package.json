@@ -1,14 +1,19 @@
 {
   "name": "@duangdang233/openclaw-tg-sgk",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Direct Telegram user-account tools for OpenClaw, restricted to bot chats",
   "type": "module",
-  "main": "./index.js",
-  "files": ["index.js", "openclaw.plugin.json", "README.md"],
+  "main": "./entry.js",
+  "files": [
+    "entry.js",
+    "index.js",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
   "scripts": {
-    "build": "node --check index.js",
-    "check": "node --check index.js",
-    "test": "node --check index.js"
+    "build": "node --check entry.js && node --check index.js",
+    "check": "node --check entry.js && node --check index.js",
+    "test": "npm run check"
   },
   "dependencies": {
     "teleproto": "1.228.4",
@@ -18,16 +23,24 @@
     "openclaw": ">=2026.5.17"
   },
   "peerDependenciesMeta": {
-    "openclaw": { "optional": true }
+    "openclaw": {
+      "optional": true
+    }
   },
   "openclaw": {
-    "extensions": ["./index.js"],
-    "runtimeExtensions": ["./index.js"],
+    "extensions": [
+      "./entry.js"
+    ],
+    "runtimeExtensions": [
+      "./entry.js"
+    ],
     "compat": {
       "pluginApi": ">=2026.5.17",
       "minGatewayVersion": "2026.5.17"
     }
   },
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "license": "MIT"
 }
