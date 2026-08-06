@@ -1,10 +1,14 @@
 {
   "id": "tg-sgk",
+  "version": "0.2.0",
   "name": "TG SGK",
-  "version": "0.1.1",
-  "description": "Operate verified Telegram bot conversations through the tg-sgk service.",
+  "description": "Direct Telegram user-account automation restricted to bot chats; no Docker sidecar required.",
   "contracts": {
     "tools": [
+      "tg_auth_status",
+      "tg_auth_send_code",
+      "tg_auth_submit_code",
+      "tg_auth_submit_password",
       "tg_bot_inspect",
       "tg_send_message",
       "tg_get_recent_messages",
@@ -16,30 +20,18 @@
       "tg_get_history"
     ]
   },
-  "activation": {
-    "onStartup": true
-  },
+  "activation": { "onStartup": true },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["baseUrl", "apiKey"],
+    "required": ["apiId", "apiHash", "phone"],
     "properties": {
-      "baseUrl": {
-        "type": "string",
-        "minLength": 8,
-        "description": "Base URL of the tg-sgk service. HTTP is allowed on the private Docker network."
-      },
-      "apiKey": {
-        "type": "string",
-        "minLength": 8,
-        "description": "Bearer API key configured on the tg-sgk service."
-      },
-      "timeoutMs": {
-        "type": "number",
-        "minimum": 1000,
-        "maximum": 180000,
-        "default": 45000
-      }
+      "apiId": { "type": "integer", "minimum": 1, "description": "Telegram api_id from my.telegram.org" },
+      "apiHash": { "type": "string", "minLength": 8, "description": "Telegram api_hash from my.telegram.org" },
+      "phone": { "type": "string", "minLength": 5, "description": "Telegram phone number with country code" },
+      "stateDir": { "type": "string", "minLength": 1 },
+      "actionIntervalMs": { "type": "integer", "minimum": 0, "maximum": 60000, "default": 1200 },
+      "defaultTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 180000, "default": 30000 }
     }
   }
 }
