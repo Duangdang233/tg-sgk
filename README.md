@@ -1,16 +1,29 @@
 # tg-sgk
 
-让 OpenClaw 使用你的 Telegram **个人账号**操作第三方机器人。服务端强制校验目标必须是 Bot，拒绝真人、群组和频道。
+让 OpenClaw 使用一个 Telegram **个人账号**操作第三方机器人。插件会在每次操作前验证目标 `bot === true`，拒绝真人、群组和频道。
 
-## 最小化跑通
+## 当前架构：直接插件模式
 
-### 前提
+```text
+OpenClaw Gateway
+  └─ tg-sgk 插件（Node.js + teleproto）
+       ├─ Telegram MTProto 连接
+       └─ $OPENCLAW_STATE_DIR/tg-sgk/session.txt
+```
 
-- `tg-sgk` 与现有 OpenClaw Docker 容器运行在同一台机器。
-- 已安装 Docker 和 Docker Compose v2。
-- 在 `my.telegram.org` 创建应用并取得 `api_id`、`api_hash`。
+不再需要：
 
-### 一条命令安装
+- Docker 或 Docker Compose
+- Python / FastAPI / Telethon sidecar
+- `tg-sgk-api` 容器
+- 私有 Docker 网络
+- 域名、Caddy 或 HTTPS API
+
+`teleproto` 是纯 JavaScript MTProto 客户端，依赖会由 OpenClaw 的插件安装器安装。
+
+## 最小化安装
+
+在能够运行 `openclaw` CLI 的同一个环境中：
 
 ```bash
 git clone https://github.com/Duangdang233/tg-sgk.git
@@ -18,76 +31,101 @@ cd tg-sgk
 bash quickstart.sh
 ```
 
-仓库是私有仓库时，GitHub 会要求使用已登录的凭据或 Personal Access Token。不要使用 `git@github.com:...`，除非当前机器已经配置 SSH 客户端和私钥。
+已经克隆时：
 
-脚本只会要求你输入：
-
-1. `TG_API_ID`
-2. `TG_API_HASH`
-3. Telegram 手机号
-4. OpenClaw 容器名（只有无法自动识别时才询问）
-
-随后脚本会自动：
-
-- 生成 API Key 和 `.env`
-- 创建 Telegram 登录 Session
-- 启动 `tg-sgk-api`
-- 把它与 OpenClaw 接入同一个私有 Docker 网络
-- 打包并安装零编译 JavaScript 插件
-- 写入插件配置并重启 OpenClaw
-- 用 `@BotFather` 验证 Telegram 登录、网络和插件注册
-
-插件不需要执行 `npm install`、`npm run build` 或 TypeScript 编译。
-
-完成后，在你平常使用的 OpenClaw 对话里发送：
-
-```text
-使用 tg_bot_inspect 检查 @BotFather 是否为机器人，只检查，不要发送消息。
+```bash
+cd tg-sgk
+git pull --ff-only
+bash quickstart.sh
 ```
 
-然后测试一个真实机器人：
+脚本只要求：
+
+1. Telegram `api_id`
+2. Telegram `api_hash`
+3. 带国家码的手机号
+
+脚本会安装插件、写入配置、检查运行时注册并尝试重启 Gateway。
+
+## 第一次登录
+
+回到日常使用的 OpenClaw 对话，发送：
 
 ```text
-向 @your_bot 发送 /start，读取回复和按钮，但先不要点击。
+检查 Telegram 登录状态；如果未登录，就使用 tg_auth_send_code 给我发送验证码。
 ```
 
-## 日常使用
-
-探索机器人：
+收到 Telegram 验证码后发送：
 
 ```text
-检查 @example_bot，发送 /start，读取最新回复和按钮，不要自动点击。
+Telegram 验证码是 12345，请使用 tg_auth_submit_code 登录。
 ```
 
-点击按钮：
+开启 Telegram 两步验证时，OpenClaw 会提示调用 `tg_auth_submit_password`。为了降低风险，建议使用专门的 Telegram 自动化账号。
+
+登录成功后 Session 保存在：
+
+```text
+$OPENCLAW_STATE_DIR/tg-sgk/session.txt
+```
+
+默认是：
+
+```text
+~/.openclaw/tg-sgk/session.txt
+```
+
+OpenClaw 的状态目录应使用持久化存储；只要该目录保留，替换运行环境后无需重新登录。
+
+## 最小验收
+
+```text
+使用 tg_bot_inspect 检查 @BotFather 是否为机器人，只检查，不发送消息。
+```
+
+然后测试一个无风险机器人：
+
+```text
+向 @example_bot 发送 /start，读取最新回复和按钮，但先不要点击。
+```
+
+确认按钮后：
 
 ```text
 点击 @example_bot 消息 ID 12345 中名为“每日签到”的按钮，然后读取结果。
 ```
 
-保存固定流程：
+## 工具
 
-```text
-把刚才的操作保存为流程 example-checkin，以后直接运行，不需要重新分析。
-```
+登录：
 
-运行固定流程：
+- `tg_auth_status`
+- `tg_auth_send_code`
+- `tg_auth_submit_code`
+- `tg_auth_submit_password`
 
-```text
-运行 example-checkin。
-```
+Telegram 操作：
 
-## quickstart 的部署结构
+- `tg_bot_inspect`
+- `tg_send_message`
+- `tg_get_recent_messages`
+- `tg_wait_update`
+- `tg_click_button`
 
-```text
-OpenClaw 容器
-    │ tg-sgk OpenClaw 插件
-    │ Docker 私有网络 tg-sgk-net
-    ▼
-tg-sgk-api 容器
-    │ Telethon Session
-    ▼
-Telegram 第三方机器人
-```
+固定流程和记录：
 
-测试模式不需要域名、HTTPS、Caddy，也不需要修改 OpenClaw 的 `docker-compose.yml`。
+- `tg_save_flow`
+- `tg_list_flows`
+- `tg_run_flow`
+- `tg_get_history`
+
+## 安全边界
+
+- 只允许操作 Telegram Bot。
+- 不支持群组、频道或真人私聊。
+- 不支持 Mini App、网页、支付、钱包或验证码绕过。
+- Session、流程和历史记录只保存在 OpenClaw 本地状态目录，不进入 Git 仓库。
+
+## 旧文件说明
+
+仓库中仍可能保留早期 sidecar 原型文件，但当前安装入口只使用 `openclaw-plugin/` 和 `quickstart.sh`。旧 Docker/Python 文件不参与运行。
