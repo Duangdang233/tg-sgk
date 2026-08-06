@@ -1,39 +1,34 @@
 # OpenClaw TG SGK plugin
 
-This package exposes the `tg-sgk` HTTPS API as OpenClaw tools. The Telegram login session remains in the separate service and is never stored in the plugin.
+This package exposes the `tg-sgk` API as nine OpenClaw tools. It ships as plain ESM JavaScript and requires no TypeScript compilation or local dependency installation.
 
-## Build
+The Telegram login session remains in the separate `tg-sgk` service and is never stored in this plugin.
 
-```bash
-npm install
-npm run build
-```
-
-## Install locally
+## Verify package
 
 ```bash
-openclaw plugins install /path/to/tg-sgk/openclaw-plugin
+node --check index.js
+npm pack --dry-run
 ```
 
-Configure the plugin in the OpenClaw Gateway configuration:
+## Install
+
+The repository root `quickstart.sh` packs, installs, configures, and verifies this plugin automatically.
+
+Manual installation from a packed artifact is also supported:
+
+```bash
+npm pack
+openclaw plugins install npm-pack:./duangdang233-openclaw-tg-sgk-0.1.1.tgz --force
+```
+
+Configure `plugins.entries.tg-sgk.config` with:
 
 ```json5
 {
-  plugins: {
-    entries: {
-      "tg-sgk": {
-        enabled: true,
-        config: {
-          baseUrl: "https://tg.example.com",
-          apiKey: "same-value-as-TG_SGK_API_KEY",
-          timeoutMs: 45000
-        }
-      }
-    }
-  },
-  tools: {
-    allow: ["tg-sgk"]
-  }
+  baseUrl: "http://tg-sgk-api:8000",
+  apiKey: "same-value-as-TG_SGK_API_KEY",
+  timeoutMs: 45000
 }
 ```
 
