@@ -10,11 +10,19 @@
     "README.md"
   ],
   "scripts": {
+    "build": "node --check index.js",
+    "plugin:build": "node --check index.js",
+    "plugin:validate": "node --check index.js && npm pack --dry-run",
     "check": "node --check index.js",
     "test": "npm run check"
   },
   "peerDependencies": {
     "openclaw": ">=2026.5.17"
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
   },
   "openclaw": {
     "extensions": [
